@@ -1,0 +1,33 @@
+{
+    "name": "indiesystems/laravel-permissions-adminlte-ui",
+    "description": "A Laravel adminLTE bootstrap 4 UI package for spatie permissions",
+    "type": "library",
+    "license": "MIT",
+    "homepage": "https",
+    "authors": [
+        {
+            "name": "Chris Dimas",
+            "email": "chris@indie.systems",
+            "homepage": "https://indie.systems",
+            "role": "Developer"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "IndieSystems\\PermissionsAdminlteUi\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "IndieSystems\\PermissionsAdminlteUi\\Providers\\AdminLteUiComponentsProvider"
+            ]
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "require": {
+        "php": ">=8.1",
+        "spatie/laravel-permission": "^5.9"
+    }
+}
