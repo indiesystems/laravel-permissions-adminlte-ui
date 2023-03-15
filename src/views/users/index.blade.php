@@ -30,6 +30,7 @@
                                         <th>Name</th>
                                         <th>Email</th>
                                         <th>Roles</th>
+                                        <th>Verified</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
@@ -38,6 +39,13 @@
                                     <tr>
                                         <td>{{ $user->name }}</td>
                                         <td>{{ $user->email }}</td>
+                                        <td>
+                                            @if ($user->hasVerifiedEmail())
+                                            <i class="far fa-check-circle text-success"></i>
+                                            @else
+                                            <i class="far fa-times-circle text-danger"></i>
+                                            @endif
+                                        </td>
                                         <td>
                                             @foreach($user->getRoleNames() as $role)
                                                 <span class="badge badge-primary">{{ $role }}</span>

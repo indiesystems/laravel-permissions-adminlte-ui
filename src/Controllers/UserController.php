@@ -8,6 +8,7 @@ use IndieSystems\PermissionsAdminlteUi\Notifications\NewUser;
 use IndieSystems\PermissionsAdminlteUi\Requests\StoreUserRequest;
 use IndieSystems\PermissionsAdminlteUi\Requests\UpdateUserRequest;
 use Spatie\Permission\Models\Role;
+use Illuminate\Support\Str;
 
 class UserController extends Controller
 {
@@ -54,7 +55,7 @@ class UserController extends Controller
         if (isset($request->password) || !empty($request->password)) {
             $plainTextPassword = $request->password;
         } else {
-            $plainTextPassword = str_random(10);
+            $plainTextPassword = Str::random(10);
         }
 
         $password = bcrypt($plainTextPassword);

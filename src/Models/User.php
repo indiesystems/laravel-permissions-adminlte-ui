@@ -2,13 +2,12 @@
 
 namespace IndieSystems\PermissionsAdminlteUi\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use IndieSystems\AdminLteUiComponents\Traits\Formable;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
-use IndieSystems\AdminLteUiComponents\Traits\Formable;
 
 class User extends Authenticatable
 {
@@ -45,8 +44,14 @@ class User extends Authenticatable
     ];
 
     protected $fillableFormFields = [
-        ['type' => 'text', 'name'=>'', 'placeholder'=> '', 'label' => 'name'],
-        ['type' => 'email', 'name'=>'', 'placeholder'=> '', 'label' => 'email'],
-        ['type' => 'password', 'name'=>'', 'placeholder'=> '', 'label' => 'password'],
+        ['type' => 'text', 'name' => '', 'placeholder' => '', 'label' => 'name'],
+        ['type' => 'email', 'name' => '', 'placeholder' => '', 'label' => 'email'],
+        ['type' => 'password', 'name' => '', 'placeholder' => '', 'label' => 'password'],
     ];
+
+    public function setPasswordAttribute($password)
+    {
+        $this->attributes['password'] = bcrypt($password);
+    }
+
 }
