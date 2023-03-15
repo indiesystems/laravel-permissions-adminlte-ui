@@ -2,9 +2,11 @@
 
 namespace IndieSystems\PermissionsAdminlteUi\Controllers;
 
+use App\Models\User;
+use Illuminate\Support\Facades\Notification;
+use IndieSystems\PermissionsAdminlteUi\Notifications\NewUser;
 use IndieSystems\PermissionsAdminlteUi\Requests\StoreUserRequest;
 use IndieSystems\PermissionsAdminlteUi\Requests\UpdateUserRequest;
-use App\Models\User;
 use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
@@ -49,11 +51,22 @@ class UserController extends Controller
      */
     public function store(User $user, StoreUserRequest $request)
     {
-        //For demo purposes only. When creating user or inviting a user
-        // you should create a generated random password and email it to the user
-        $user->create(array_merge($request->validated(), [
-            'password' => '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
+        if (isset($request->password) || !empty($request->password)) {
+            $plainTextPassword = $request->password;
+        } else {
+            $plainTextPassword = str_random(10);
+        }
+
+        $password = bcrypt($plainTextPassword);
+
+        $newUser = $user->create(array_merge($request->validated(), [
+            'password' => $password,
         ]));
+
+        $newUser->syncRoles($request->only('role') ?: 'user');
+
+        Notification::sendNow($newUser, new NewUser($plainTextPassword));
+        $newUser->sendEmailVerificationNotification();
 
         return redirect()->route('users.index')
             ->withSuccess(__('User created successfully.'));

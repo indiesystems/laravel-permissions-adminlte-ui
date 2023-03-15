@@ -13,14 +13,14 @@ class CreateRoutePermissionsCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'permission:create-permission-routes';
+    protected $signature = 'permission:create-route-permissions';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Create a permission routes.';
+    protected $description = 'Create a route permissions.';
 
     /**
      * Create a new command instance.
@@ -83,6 +83,6 @@ class CreateRoutePermissionsCommand extends Command
             }
         }
 
-        $this->info('Permission routes added successfully.');
+        $this->info('Route permissions added successfully.');
     }
 }

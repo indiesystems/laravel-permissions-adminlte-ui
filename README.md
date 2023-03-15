@@ -74,13 +74,22 @@ class User extends Authenticatable
 
 You need to add to your AdminLTE `resources/views/layouts/navigation.blade.php` the following line, inside `nav > ul` tag
 
-` @include('permissionsUi::layouts.navigation')`
+`@include('permissionsUi::layouts.navigation')`
 
 ## Create Permissions Command
+
 This will create all permissions based on route names.
-Note: You should specify permissions on each controller constructor
+Note: You should specify permissions middleware on each controller constructor
 
 `php artisan permission:create-permission-routes`
+
+## Create basic roles && assign admin
+
+This command will create `admin` and `user` roles. Admin role will be assigned with all permissions and user role will have profile.list and profile.edit.
+
+`php artisan permission:create-basic-roles`
+
+`php artisan permission:assign-admin test@example.com`
 
 ## Permission mapping schema
 
@@ -107,3 +116,14 @@ class FooController extends Controller
 
 
 ## Use permission middleware on route or route group
+
+Assigning permission middleware like this will not honor `*.list` permission (for now).
+
+```
+Route::middleware(['auth','permission'])->group(function () {
+    Route::view('about', 'about')->name('about');
+    Route::get('profile', [\App\Http\Controllers\ProfileController::class, 'show'])->name('profile.show');
+    Route::put('profile', [\App\Http\Controllers\ProfileController::class, 'update'])->name('profile.update');
+    Route::resource('post', \App\Http\Controllers\ConsumptionController::class);
+});
+```

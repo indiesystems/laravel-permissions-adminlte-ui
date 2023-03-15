@@ -6,6 +6,8 @@ use Illuminate\Routing\Router;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Route;
 use IndieSystems\PermissionsAdminlteUi\Console\CreateRoutePermissionsCommand;
+use IndieSystems\PermissionsAdminlteUi\Console\AssignAdminCommand;
+use IndieSystems\PermissionsAdminlteUi\Console\CreateAdminRoleCommand;
 
 class PermissionsUiProvider extends ServiceProvider
 {
@@ -16,9 +18,6 @@ class PermissionsUiProvider extends ServiceProvider
      */
     public function boot(Router $router)
     {
-        // $router->middlewareGroup('web', [PermissionMiddleware::class]);
-        // $router->pushMiddlewareToGroup('web', [PermissionMiddleware::class]);
-
         $this->loadViewsFrom(__DIR__ . '/../views/', 'permissionsUi');
         $this->registerRoutes();
         // $this->loadMigrationsFrom();
@@ -30,6 +29,8 @@ class PermissionsUiProvider extends ServiceProvider
         if ($this->app->runningInConsole()) {
             $this->commands([
                 CreateRoutePermissionsCommand::class,
+                AssignAdminCommand::class,
+                CreateAdminRoleCommand::class,
             ]);
         }
     }
