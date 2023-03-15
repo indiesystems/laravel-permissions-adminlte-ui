@@ -81,7 +81,7 @@ You need to add to your AdminLTE `resources/views/layouts/navigation.blade.php` 
 This will create all permissions based on route names.
 Note: You should specify permissions middleware on each controller constructor
 
-`php artisan permission:create-permission-routes`
+`php artisan permission:create-route-permissions`
 
 ## Create basic roles && assign admin
 

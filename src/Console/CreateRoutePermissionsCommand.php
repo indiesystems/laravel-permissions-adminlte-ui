@@ -49,7 +49,7 @@ class CreateRoutePermissionsCommand extends Command
             'delete' => ['destroy'],
         ];
 
-        $skip = ['sanctum'];
+        $skip = ['sanctum','generated'];
 
         foreach ($routes as $route) {
             if ($route->getName() != '' && $route->getAction()['middleware']['0'] == 'web') {
