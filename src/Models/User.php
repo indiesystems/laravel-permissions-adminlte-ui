@@ -1,6 +1,6 @@
 <?php
 
-namespace IndieSystems\PermissionsAdminlteUi;
+namespace IndieSystems\PermissionsAdminlteUi\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
