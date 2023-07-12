@@ -15,6 +15,7 @@ class UserController extends Controller
 
     public function __construct()
     {
+        $this->middleware(['auth','verified']);
         $this->middleware('permission:users.list|users.create|users.edit|users.delete', ['only' => ['index', 'show']]);
         $this->middleware('permission:users.create', ['only' => ['create', 'store']]);
         $this->middleware('permission:users.edit', ['only' => ['edit', 'update']]);
@@ -67,7 +68,10 @@ class UserController extends Controller
         $newUser->syncRoles($request->only('role') ?: 'user');
 
         Notification::sendNow($newUser, new NewUser($plainTextPassword));
-        $newUser->sendEmailVerificationNotification();
+
+        if(class_implements($newUser,'MustVerifyEmail')){
+            $newUser->sendEmailVerificationNotification();
+        }
 
         return redirect()->route('users.index')
             ->withSuccess(__('User created successfully.'));

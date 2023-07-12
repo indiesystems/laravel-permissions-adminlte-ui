@@ -29,8 +29,8 @@
                                     <tr>
                                         <th>Name</th>
                                         <th>Email</th>
-                                        <th>Roles</th>
                                         <th>Verified</th>
+                                        <th>Roles</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>

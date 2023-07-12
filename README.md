@@ -41,6 +41,15 @@ or for production use
 
 `composer require indiesystems/laravel-permissions-adminlte-ui`
 
+### Spatie permissions installation
+
+Our packgage will isntall spatie's permissions as a dependecy but you need to complete the installation yourself like below
+
+```
+php artisan vendor:publish --provider="Spatie\Permission\PermissionServiceProvider"
+php artisan migrate
+```
+
 ## Configuration
 
 Add these entries to your `app\Http\Kernel.php` route middleware section like this:

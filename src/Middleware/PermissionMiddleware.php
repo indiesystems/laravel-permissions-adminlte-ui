@@ -4,10 +4,19 @@ namespace IndieSystems\PermissionsAdminlteUi\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Spatie\Permission\Exceptions\UnauthorizedException;
 
 class PermissionMiddleware
 {
+    protected $permissionMap = [
+        // perm => route name suffix
+        'list'   => ['index', 'show'],
+        'create' => ['create', 'store'],
+        'edit'   => ['edit', 'update'],
+        'delete' => ['destroy'],
+    ];
+
     /**
      * Handle an incoming request.
      *
@@ -33,6 +42,11 @@ class PermissionMiddleware
             $permission = $request->route()->getName();
 
             $permissions = array($permission);
+            foreach ($this->permissionMap as $perm => $routeSuffixes) {
+                if (Str::endsWith($permission, $routeSuffixes)) {
+                    $permissions[] = explode('.', $permission)[0] . '.' . $perm;
+                }
+            }
         }
 
         foreach ($permissions as $permission) {
