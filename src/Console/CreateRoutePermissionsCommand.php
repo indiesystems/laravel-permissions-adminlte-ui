@@ -49,29 +49,28 @@ class CreateRoutePermissionsCommand extends Command
             'delete' => ['destroy'],
         ];
 
-        $skip = ['sanctum','generated'];
+        $skip = ['sanctum', 'generated'];
 
         foreach ($routes as $route) {
-            if ($route->getName() != '' && $route->getAction()['middleware']['0'] == 'web') {
-                
-                foreach ($skip as $key => $skipKeyword) {
-                    if(strpos($route->getName(), $skipKeyword) !== false){
-                        continue 2;
-                    }
+            foreach ($skip as $key => $skipKeyword) {
+                if (strpos($route->getName(), $skipKeyword) !== false) {
+                    continue 2;
                 }
+            }
+            if ($route->getName() != '' && $route->getAction()['middleware']['0'] == 'web') {
 
                 $permissionName = null;
-                
+
                 foreach ($permissionMap as $name => $suffixes) {
-                    $routeNameSegments = explode('.', $route->getName());
+                    $routeNameSegments     = explode('.', $route->getName());
                     $routePermissionPrefix = $routeNameSegments[0];
-                    $routeSuffix = array_pop($routeNameSegments);
-                    if(in_array($routeSuffix, $suffixes)){
+                    $routeSuffix           = array_pop($routeNameSegments);
+                    if (in_array($routeSuffix, $suffixes)) {
                         $permissionName = $routePermissionPrefix . '.' . $name;
                     }
                 }
 
-                if(is_null($permissionName)){
+                if (is_null($permissionName)) {
                     $permissionName = $route->getName();
                 }
 
