@@ -28,6 +28,6 @@
     "prefer-stable": true,
     "require": {
         "php": ">=8.1",
-        "spatie/laravel-permission": "^5.9"
+        "spatie/laravel-permission": "^6.0"
     }
 }
