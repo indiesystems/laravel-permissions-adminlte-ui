@@ -29,7 +29,9 @@
                             <div class="btn-group">
                                 <a class="btn btn-info btn-sm" href="{{ route('roles.show', $role->id) }}">Show</a>
                                 <a class="btn btn-primary btn-sm" href="{{ route('roles.edit', $role->id) }}">Edit</a>
-                                <form class="btn-group" action="{{ route('roles.destroy', $role->id) }}">
+                                <form class="btn-group" action="{{ route('roles.destroy', $role->id) }}" method="post">
+                                    @csrf
+                                    @method('DELETE')
                                     <button class="btn btn-danger btn-sm">Delete</button>
                                 </form>
                             </div>
