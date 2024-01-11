@@ -65,7 +65,7 @@ class UserController extends Controller
             'password' => $password,
         ]));
 
-        $newUser->syncRoles($request->only('role') ?: 'user');
+        $newUser->syncRoles(Role::find($request->only('role')) ?: 'user');
 
         Notification::sendNow($newUser, new NewUser($plainTextPassword));
 
@@ -120,7 +120,7 @@ class UserController extends Controller
     {
         $user->update($request->validated());
 
-        $user->syncRoles($request->get('role'));
+        $user->syncRoles(Role::find($request->get('role')));
 
         return redirect()->route('users.index')
             ->withSuccess(__('User updated successfully.'));
