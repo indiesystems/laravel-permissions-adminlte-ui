@@ -44,7 +44,9 @@ class PermissionMiddleware
             $permissions = array($permission);
             foreach ($this->permissionMap as $perm => $routeSuffixes) {
                 if (Str::endsWith($permission, $routeSuffixes)) {
-                    $permissions[] = explode('.', $permission)[0] . '.' . $perm;
+                    $segments = explode('.', $permission);
+                    array_pop($segments);
+                    $permissions[] = implode('.', $segments) . '.' . $perm;
                 }
             }
         }

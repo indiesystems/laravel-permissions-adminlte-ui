@@ -57,14 +57,15 @@ class CreateRoutePermissionsCommand extends Command
                     continue 2;
                 }
             }
-            if ($route->getName() != '' && $route->getAction()['middleware']['0'] == 'web') {
+            if ($route->getName() != '' && isset($route->getAction()['middleware']) && 
+                in_array('web', $route->getAction()['middleware'])) {
 
                 $permissionName = null;
 
                 foreach ($permissionMap as $name => $suffixes) {
                     $routeNameSegments     = explode('.', $route->getName());
-                    $routePermissionPrefix = $routeNameSegments[0];
                     $routeSuffix           = array_pop($routeNameSegments);
+                    $routePermissionPrefix = implode('.',$routeNameSegments);
                     if (in_array($routeSuffix, $suffixes)) {
                         $permissionName = $routePermissionPrefix . '.' . $name;
                     }
