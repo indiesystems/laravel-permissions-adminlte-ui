@@ -47,18 +47,23 @@ class CreateAdminRoleCommand extends Command
             $permissions = array_merge($permissions, $permissionClass::pluck('name')->toArray());
         }
 
-        $this->call('permission:create-role', [
-            'name' => 'admin', 'guard' => 'web', 'permissions' => implode("|", $permissions),
+        $adminRole = $roleClass::create([
+            'name' => 'admin',
+            'guard' => 'web',
         ]);
+
+        $adminRole->syncPermissions($permissions);
 
         $userPermissions = [
             'profile.edit',
             'profile.list',
         ];
 
-        $this->call('permission:create-role', [
-            'name' => 'user', 'guard' => 'web', 'permissions' => implode("|", $userPermissions),
+        $userRole = $roleClass::create([
+            'name' => 'user',
+            'guard' => 'web',
         ]);
+        $userRole->syncPermissions($userPermissions);
 
         $this->info('Basic roles added successfully.');
     }
