@@ -57,6 +57,7 @@ class CreateRoutePermissionsCommand extends Command
                     continue 2;
                 }
             }
+
             if ($route->getName() != '' && isset($route->getAction()['middleware']) && 
                 in_array('web', $route->getAction()['middleware'])) {
 

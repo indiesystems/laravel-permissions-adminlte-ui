@@ -1,6 +1,6 @@
 <?php
 
-if(! function_exists('routePermission')){
+// if(! function_exists('routePermission')){
     function routePermission($route, $type = 'permission')
     {
         $permissionMap = [
@@ -30,4 +30,4 @@ if(! function_exists('routePermission')){
         }
         return $route;
     }
-}
+// }

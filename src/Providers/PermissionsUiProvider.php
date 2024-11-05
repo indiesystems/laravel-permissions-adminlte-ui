@@ -18,6 +18,7 @@ class PermissionsUiProvider extends ServiceProvider
      */
     public function boot(Router $router)
     {
+        require_once (__DIR__ . '/../helpers.php');
         $this->loadViewsFrom(__DIR__ . '/../views/', 'permissionsUi');
         $this->registerRoutes();
         // $this->loadMigrationsFrom();
