@@ -58,7 +58,9 @@ class CreateRoutePermissionsCommand extends Command
                 }
             }
 
-            if ($route->getName() != '' && isset($route->getAction()['middleware']) && 
+            if ($route->getName() != '' && 
+                isset($route->getAction()['middleware']) && 
+                is_array($route->getAction()['middleware']) &&
                 in_array('web', $route->getAction()['middleware'])) {
 
                 $permissionName = null;

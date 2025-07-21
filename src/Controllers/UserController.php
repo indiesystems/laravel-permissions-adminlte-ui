@@ -3,19 +3,21 @@
 namespace IndieSystems\PermissionsAdminlteUi\Controllers;
 
 use App\Models\User;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Str;
 use IndieSystems\PermissionsAdminlteUi\Notifications\NewUser;
+use IndieSystems\PermissionsAdminlteUi\Notifications\UserPasswordReset;
 use IndieSystems\PermissionsAdminlteUi\Requests\StoreUserRequest;
 use IndieSystems\PermissionsAdminlteUi\Requests\UpdateUserRequest;
 use Spatie\Permission\Models\Role;
-use Illuminate\Support\Str;
 
 class UserController extends Controller
 {
 
     public function __construct()
     {
-        $this->middleware(['auth','verified']);
+        $this->middleware(['auth', 'verified']);
         $this->middleware('permission:users.list|users.create|users.edit|users.delete', ['only' => ['index', 'show']]);
         $this->middleware('permission:users.create', ['only' => ['create', 'store']]);
         $this->middleware('permission:users.edit', ['only' => ['edit', 'update']]);
@@ -40,7 +42,10 @@ class UserController extends Controller
      */
     public function create()
     {
-        return view('permissionsUi::users.create');
+        return view('permissionsUi::users.create', [
+            'userRole' => Role::findByName('user')->toArray(),
+            'roles' => Role::latest()->get(),
+        ]);
     }
 
     /**
@@ -68,10 +73,6 @@ class UserController extends Controller
         $newUser->syncRoles(Role::find($request->only('role')) ?: 'user');
 
         Notification::sendNow($newUser, new NewUser($plainTextPassword));
-
-        if(class_implements($newUser,'MustVerifyEmail')){
-            $newUser->sendEmailVerificationNotification();
-        }
 
         return redirect()->route('users.index')
             ->withSuccess(__('User created successfully.'));
@@ -139,5 +140,27 @@ class UserController extends Controller
 
         return redirect()->route('users.index')
             ->withSuccess(__('User deleted successfully.'));
+    }
+
+    public function resendVerification(User $user, Request $request)
+    {
+        if (class_implements($user, 'MustVerifyEmail')) {
+            $user->sendEmailVerificationNotification();
+            return redirect()->route('users.index')
+                ->withSuccess(__('Verification send successfully.'));
+        } else {
+            return redirect()->route('users.index')
+                ->withError(__('Users are not required to verify their emails.'));
+        }
+    }
+
+    public function resetPassword(User $user, Request $request)
+    {
+        $plainTextPassword = Str::random(10);
+        $user->password    = $plainTextPassword;
+        $user->save();
+        Notification::sendNow($user, new UserPasswordReset($plainTextPassword));
+        return redirect()->route('users.index')
+            ->withError(__('User password reset and send to email.'));
     }
 }

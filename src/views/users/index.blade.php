@@ -61,6 +61,18 @@
                                                     <button class="btn btn-danger btn-sm">Delete</button>
                                                 </form>
                                             </div>
+                                            <div class="btn-group">
+                                                <form action="{{ route('users.manual-resend-verification', $user->id) }}" method="post" >
+                                                    @csrf
+                                                    @method('POST')
+                                                    <button class="btn btn-primary btn-sm" title="Resend Verification"><i class="fas fa-paper-plane"></i></button>
+                                                </form>
+                                                <form action="{{ route('users.manual-reset-password', $user->id) }}" method="post" class="btn-group">
+                                                    @csrf
+                                                    @method('POST')
+                                                    <button class="btn btn-warning btn-sm" title="Reset Password"><i class="fas fa-key"></i></button>
+                                                </form>
+                                            </div>
                                         </td>
                                     </tr>
                                 @endforeach
