@@ -91,124 +91,125 @@
             </div>
         </div>
 
-        {{-- Bulk action form wraps the table --}}
-        <form id="bulk-form" method="POST" action="{{ route('users.bulk-action') }}">
+        {{-- Hidden bulk action form (outside table, submitted via JS) --}}
+        <form id="bulk-form" method="POST" action="{{ route('users.bulk-action') }}" style="display:none;">
             @csrf
             <input type="hidden" name="action" id="bulk-action-input">
             <input type="hidden" name="bulk_role" id="bulk-role-input">
+            <div id="bulk-ids-container"></div>
+        </form>
 
-            <div class="card">
-                <div class="card-header">
-                    <div class="row align-items-center">
-                        <div class="col-md-6">
-                            <h3 class="card-title">
-                                <i class="fas fa-users mr-2"></i>{{ $users->total() }} Users
-                            </h3>
-                        </div>
-                        <div class="col-md-6 text-right">
-                            <div class="btn-group btn-group-sm" id="bulk-actions" style="display:none;">
-                                <span class="btn btn-default disabled" id="selected-count">0 selected</span>
-                                <div class="btn-group btn-group-sm">
-                                    <button type="button" class="btn btn-warning dropdown-toggle" data-toggle="dropdown">
-                                        <i class="fas fa-cog mr-1"></i>Bulk Actions
-                                    </button>
-                                    <div class="dropdown-menu dropdown-menu-right">
-                                        <a class="dropdown-item text-warning" href="#" onclick="submitBulk('assign_role')">
-                                            <i class="fas fa-user-tag mr-1"></i>Assign Role...
-                                        </a>
-                                        <a class="dropdown-item text-success" href="#" onclick="submitBulk('verify')">
-                                            <i class="fas fa-check mr-1"></i>Verify Email
-                                        </a>
-                                        <div class="dropdown-divider"></div>
-                                        <a class="dropdown-item text-danger" href="#" onclick="submitBulk('delete')">
-                                            <i class="fas fa-trash mr-1"></i>Delete Selected
-                                        </a>
-                                    </div>
+        <div class="card">
+            <div class="card-header">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <h3 class="card-title">
+                            <i class="fas fa-users mr-2"></i>{{ $users->total() }} Users
+                        </h3>
+                    </div>
+                    <div class="col-md-6 text-right">
+                        <div class="btn-group btn-group-sm" id="bulk-actions" style="display:none;">
+                            <span class="btn btn-default disabled" id="selected-count">0 selected</span>
+                            <div class="btn-group btn-group-sm">
+                                <button type="button" class="btn btn-warning dropdown-toggle" data-toggle="dropdown">
+                                    <i class="fas fa-cog mr-1"></i>Bulk Actions
+                                </button>
+                                <div class="dropdown-menu dropdown-menu-right">
+                                    <a class="dropdown-item text-warning" href="#" onclick="submitBulk('assign_role')">
+                                        <i class="fas fa-user-tag mr-1"></i>Assign Role...
+                                    </a>
+                                    <a class="dropdown-item text-success" href="#" onclick="submitBulk('verify')">
+                                        <i class="fas fa-check mr-1"></i>Verify Email
+                                    </a>
+                                    <div class="dropdown-divider"></div>
+                                    <a class="dropdown-item text-danger" href="#" onclick="submitBulk('delete')">
+                                        <i class="fas fa-trash mr-1"></i>Delete Selected
+                                    </a>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="card-body table-responsive p-0">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th width="40px"><input type="checkbox" id="select-all"></th>
-                                <th>Name</th>
-                                <th>Email</th>
-                                <th>Verified</th>
-                                @if(config('permissions-ui.features.user_status'))
-                                <th>Status</th>
-                                @endif
-                                <th>Roles</th>
-                                <th width="220px">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                        @foreach($users as $user)
-                            <tr>
-                                <td><input type="checkbox" name="ids[]" value="{{ $user->id }}" class="row-check"></td>
-                                <td>{{ $user->name }}</td>
-                                <td>{{ $user->email }}</td>
-                                <td>
-                                    @if ($user->hasVerifiedEmail())
-                                        <span class="badge badge-success"><i class="fas fa-check mr-1"></i>Verified</span>
-                                    @else
-                                        <span class="badge badge-danger"><i class="fas fa-times mr-1"></i>Unverified</span>
-                                    @endif
-                                </td>
-                                @if(config('permissions-ui.features.user_status'))
-                                <td>
-                                    @php $statusColors = ['active' => 'success', 'suspended' => 'warning', 'banned' => 'danger']; @endphp
-                                    <span class="badge badge-{{ $statusColors[$user->status] ?? 'secondary' }}">{{ ucfirst($user->status ?? 'active') }}</span>
-                                </td>
-                                @endif
-                                <td>
-                                    @foreach($user->getRoleNames() as $role)
-                                        <span class="badge badge-primary">{{ $role }}</span>
-                                    @endforeach
-                                </td>
-                                <td>
-                                    <div class="btn-group btn-group-sm">
-                                        <a class="btn btn-info" href="{{ route('users.show', $user->id) }}" title="View">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                        <a class="btn btn-secondary" href="{{ route('users.edit', $user->id) }}" title="Edit">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                        @if(config('permissions-ui.features.impersonation') && auth()->id() !== $user->id)
-                                        <form action="{{ route('users.impersonate.start', $user->id) }}" method="post" class="d-inline">
-                                            @csrf
-                                            <button class="btn btn-outline-dark" title="Impersonate"><i class="fas fa-user-secret"></i></button>
-                                        </form>
-                                        @endif
-                                        <form action="{{ route('users.manual-resend-verification', $user->id) }}" method="post" class="d-inline">
-                                            @csrf
-                                            <button class="btn btn-primary" title="Resend Verification"><i class="fas fa-paper-plane"></i></button>
-                                        </form>
-                                        <form action="{{ route('users.manual-reset-password', $user->id) }}" method="post" class="d-inline">
-                                            @csrf
-                                            <button class="btn btn-warning" title="Reset Password"><i class="fas fa-key"></i></button>
-                                        </form>
-                                        <form action="{{ route('users.destroy', $user->id) }}" method="post" class="d-inline" onsubmit="return confirm('Delete this user?')">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button class="btn btn-danger" title="Delete"><i class="fas fa-trash"></i></button>
-                                        </form>
-                                    </div>
-                                </td>
-                            </tr>
-                        @endforeach
-                        </tbody>
-                    </table>
-                </div>
-                <div class="card-footer clearfix">
-                    {{ $users->links() }}
-                </div>
             </div>
-        </form>
+            <div class="card-body table-responsive p-0">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th width="40px"><input type="checkbox" id="select-all"></th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Verified</th>
+                            @if(config('permissions-ui.features.user_status'))
+                            <th>Status</th>
+                            @endif
+                            <th>Roles</th>
+                            <th width="220px">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach($users as $user)
+                        <tr>
+                            <td><input type="checkbox" value="{{ $user->id }}" class="row-check"></td>
+                            <td>{{ $user->name }}</td>
+                            <td>{{ $user->email }}</td>
+                            <td>
+                                @if ($user->hasVerifiedEmail())
+                                    <span class="badge badge-success"><i class="fas fa-check mr-1"></i>Verified</span>
+                                @else
+                                    <span class="badge badge-danger"><i class="fas fa-times mr-1"></i>Unverified</span>
+                                @endif
+                            </td>
+                            @if(config('permissions-ui.features.user_status'))
+                            <td>
+                                @php $statusColors = ['active' => 'success', 'suspended' => 'warning', 'banned' => 'danger']; @endphp
+                                <span class="badge badge-{{ $statusColors[$user->status] ?? 'secondary' }}">{{ ucfirst($user->status ?? 'active') }}</span>
+                            </td>
+                            @endif
+                            <td>
+                                @foreach($user->getRoleNames() as $role)
+                                    <span class="badge badge-primary">{{ $role }}</span>
+                                @endforeach
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a class="btn btn-info" href="{{ route('users.show', $user->id) }}" title="View">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a class="btn btn-secondary" href="{{ route('users.edit', $user->id) }}" title="Edit">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    @if(config('permissions-ui.features.impersonation') && auth()->id() !== $user->id)
+                                    <form action="{{ route('users.impersonate.start', $user->id) }}" method="post" class="d-inline">
+                                        @csrf
+                                        <button class="btn btn-outline-dark" title="Impersonate"><i class="fas fa-user-secret"></i></button>
+                                    </form>
+                                    @endif
+                                    <form action="{{ route('users.manual-resend-verification', $user->id) }}" method="post" class="d-inline">
+                                        @csrf
+                                        <button class="btn btn-primary" title="Resend Verification"><i class="fas fa-paper-plane"></i></button>
+                                    </form>
+                                    <form action="{{ route('users.manual-reset-password', $user->id) }}" method="post" class="d-inline">
+                                        @csrf
+                                        <button class="btn btn-warning" title="Reset Password"><i class="fas fa-key"></i></button>
+                                    </form>
+                                    <form action="{{ route('users.destroy', $user->id) }}" method="post" class="d-inline" onsubmit="return confirm('Delete this user?')">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button class="btn btn-danger" title="Delete"><i class="fas fa-trash"></i></button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    @endforeach
+                    </tbody>
+                </table>
+            </div>
+            <div class="card-footer clearfix">
+                {{ $users->links() }}
+            </div>
+        </div>
 
-        {{-- Hidden modal for bulk role assignment --}}
+        {{-- Modal for bulk role assignment --}}
         <div class="modal fade" id="bulk-role-modal" tabindex="-1">
             <div class="modal-dialog modal-sm">
                 <div class="modal-content">
@@ -268,6 +269,18 @@ checkboxes.forEach(function(cb) {
     cb.addEventListener('change', updateBulkUI);
 });
 
+function collectIds() {
+    var container = document.getElementById('bulk-ids-container');
+    container.innerHTML = '';
+    document.querySelectorAll('.row-check:checked').forEach(function(cb) {
+        var input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'ids[]';
+        input.value = cb.value;
+        container.appendChild(input);
+    });
+}
+
 function submitBulk(action) {
     if (action === 'assign_role') {
         $('#bulk-role-modal').modal('show');
@@ -275,11 +288,13 @@ function submitBulk(action) {
     }
     if (action === 'delete' && !confirm('Delete selected users?')) return;
 
+    collectIds();
     document.getElementById('bulk-action-input').value = action;
     document.getElementById('bulk-form').submit();
 }
 
 function confirmBulkRole() {
+    collectIds();
     document.getElementById('bulk-role-input').value = document.getElementById('modal-role-select').value;
     document.getElementById('bulk-action-input').value = 'assign_role';
     $('#bulk-role-modal').modal('hide');
