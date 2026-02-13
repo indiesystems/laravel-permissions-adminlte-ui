@@ -11,7 +11,7 @@
                 </div>
             </div>
             <div class="pull-right">
-                <a class="btn btn-primary btn-sm" href="{{ route('roles.index') }}"> Back</a>
+                <a class="btn btn-primary btn-sm" href="{{ route('users.index') }}"> Back</a>
             </div>
         </div>
     </div>

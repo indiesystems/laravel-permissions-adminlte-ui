@@ -25,7 +25,7 @@ class RolesController extends Controller
      */
     public function index(Request $request)
     {
-        $roles = Role::orderBy('id', 'DESC')->paginate();
+        $roles = Role::with('permissions')->orderBy('id', 'DESC')->paginate();
         return view('permissionsUi::roles.index', compact('roles'));
     }
 
