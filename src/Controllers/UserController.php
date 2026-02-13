@@ -17,7 +17,6 @@ class UserController extends Controller
 
     public function __construct()
     {
-        $this->middleware(['auth', 'verified']);
         $this->middleware('permission:users.list|users.create|users.edit|users.delete', ['only' => ['index', 'show']]);
         $this->middleware('permission:users.create', ['only' => ['create', 'store']]);
         $this->middleware('permission:users.edit', ['only' => ['edit', 'update']]);
@@ -76,7 +75,7 @@ class UserController extends Controller
     public function create()
     {
         return view('permissionsUi::users.create', [
-            'userRole' => Role::findByName('user')->toArray(),
+            'userRole' => ['user'],
             'roles' => Role::latest()->get(),
         ]);
     }
@@ -91,19 +90,14 @@ class UserController extends Controller
      */
     public function store(User $user, StoreUserRequest $request)
     {
-        if (isset($request->password) || !empty($request->password)) {
-            $plainTextPassword = $request->password;
-        } else {
-            $plainTextPassword = Str::random(10);
-        }
+        $plainTextPassword = !empty($request->password) ? $request->password : Str::random(10);
 
-        $password = bcrypt($plainTextPassword);
-
+        // Pass plain-text password — the User model's setPasswordAttribute mutator handles bcrypt
         $newUser = $user->create(array_merge($request->validated(), [
-            'password' => $password,
+            'password' => $plainTextPassword,
         ]));
 
-        $newUser->syncRoles(Role::find($request->only('role')) ?: 'user');
+        $newUser->syncRoles($request->get('role') ? Role::find($request->get('role')) : 'user');
 
         Notification::sendNow($newUser, new NewUser($plainTextPassword));
 
@@ -159,17 +153,15 @@ class UserController extends Controller
      */
     public function update(User $user, UpdateUserRequest $request)
     {
-        $data = $request->validated();
+        $user->update($request->validated());
 
-        // Handle status update if feature enabled
+        // Handle status update if feature enabled (saved separately — host app may not have 'status' in $fillable)
         if (config('permissions-ui.features.user_status') && $request->has('status')) {
             $statuses = config('permissions-ui.user_statuses', ['active', 'suspended', 'banned']);
             if (in_array($request->get('status'), $statuses)) {
-                $data['status'] = $request->get('status');
+                $user->forceFill(['status' => $request->get('status')])->save();
             }
         }
-
-        $user->update($data);
         $user->syncRoles(Role::find($request->get('role')));
 
         return redirect()->route('users.index')
@@ -183,8 +175,12 @@ class UserController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function destroy(User $user)
+    public function destroy(User $user, Request $request)
     {
+        if ($user->id === $request->user()->id) {
+            return back()->withErrors(['delete' => __('You cannot delete your own account.')]);
+        }
+
         $user->delete();
 
         return redirect()->route('users.index')
@@ -220,7 +216,7 @@ class UserController extends Controller
                 $role = Role::findById($request->get('bulk_role'));
                 $users = User::whereIn('id', $ids)->get();
                 foreach ($users as $user) {
-                    $user->syncRoles($role);
+                    $user->assignRole($role);
                 }
                 return back()->withSuccess(__(':count user(s) assigned to role :role.', ['count' => count($ids), 'role' => $role->name]));
 
@@ -234,14 +230,15 @@ class UserController extends Controller
 
     public function resendVerification(User $user, Request $request)
     {
-        if (class_implements($user, 'MustVerifyEmail')) {
-            $user->sendEmailVerificationNotification();
-            return redirect()->route('users.index')
-                ->withSuccess(__('Verification send successfully.'));
-        } else {
+        if (!($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail)) {
             return redirect()->route('users.index')
                 ->withError(__('Users are not required to verify their emails.'));
         }
+
+        $user->sendEmailVerificationNotification();
+
+        return redirect()->route('users.index')
+            ->withSuccess(__('Verification email sent to :email.', ['email' => $user->email]));
     }
 
     public function resetPassword(User $user, Request $request)
@@ -251,6 +248,6 @@ class UserController extends Controller
         $user->save();
         Notification::sendNow($user, new UserPasswordReset($plainTextPassword));
         return redirect()->route('users.index')
-            ->withError(__('User password reset and send to email.'));
+            ->withSuccess(__('User password reset and sent to email.'));
     }
 }

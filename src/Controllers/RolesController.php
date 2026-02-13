@@ -5,6 +5,7 @@ namespace IndieSystems\PermissionsAdminlteUi\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -103,7 +104,7 @@ class RolesController extends Controller
     public function update(Role $role, Request $request)
     {
         $this->validate($request, [
-            'name'       => 'required',
+            'name'       => 'required|unique:roles,name,' . $role->id,
             'permission' => 'required',
         ]);
 
@@ -123,6 +124,10 @@ class RolesController extends Controller
      */
     public function destroy(Role $role)
     {
+        if ($role->users()->count() > 0) {
+            return back()->withErrors(['delete' => __('Cannot delete role ":name" — it still has :count user(s) assigned.', ['name' => $role->name, 'count' => $role->users()->count()])]);
+        }
+
         $role->delete();
 
         return redirect()->route('roles.index')
@@ -140,12 +145,14 @@ class RolesController extends Controller
             $newName = $role->name . '-copy-' . $counter++;
         }
 
-        $newRole = Role::create([
-            'name' => $newName,
-            'guard_name' => $role->guard_name,
-        ]);
-
-        $newRole->syncPermissions($role->permissions);
+        $newRole = DB::transaction(function () use ($role, $newName) {
+            $newRole = Role::create([
+                'name' => $newName,
+                'guard_name' => $role->guard_name,
+            ]);
+            $newRole->syncPermissions($role->permissions);
+            return $newRole;
+        });
 
         return redirect()->route('roles.edit', $newRole->id)
             ->with('success', __('Role cloned as ":name". Rename it and adjust permissions.', ['name' => $newName]));
@@ -165,6 +172,11 @@ class RolesController extends Controller
         $ids = $request->get('ids');
 
         if ($request->get('action') === 'delete') {
+            // Skip roles that still have users assigned
+            $rolesWithUsers = Role::whereIn('id', $ids)->whereHas('users')->pluck('name');
+            if ($rolesWithUsers->isNotEmpty()) {
+                return back()->withErrors(['bulk' => __('Cannot delete roles with assigned users: :names', ['names' => $rolesWithUsers->join(', ')])]);
+            }
             Role::whereIn('id', $ids)->delete();
             return back()->withSuccess(__(':count role(s) deleted.', ['count' => count($ids)]));
         }

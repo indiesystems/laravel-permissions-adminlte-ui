@@ -74,23 +74,23 @@
                                 <span class="badge badge-info">{{ $role->permissions->count() }} permissions</span>
                             </td>
                             <td>
-                                <div class="btn-group btn-group-sm">
+                                <div class="btn-group btn-group-sm mr-1">
                                     <a class="btn btn-info" href="{{ route('roles.show', $role->id) }}" title="View">
                                         <i class="fas fa-eye"></i>
                                     </a>
                                     <a class="btn btn-secondary" href="{{ route('roles.edit', $role->id) }}" title="Edit">
                                         <i class="fas fa-edit"></i>
                                     </a>
-                                    <form action="{{ route('roles.clone', $role->id) }}" method="post" class="d-inline">
-                                        @csrf
-                                        <button class="btn btn-outline-primary" title="Clone Role"><i class="fas fa-clone"></i></button>
-                                    </form>
                                     <form class="d-inline" action="{{ route('roles.destroy', $role->id) }}" method="post" onsubmit="return confirm('Delete this role?')">
                                         @csrf
                                         @method('DELETE')
                                         <button class="btn btn-danger" title="Delete"><i class="fas fa-trash"></i></button>
                                     </form>
                                 </div>
+                                <form action="{{ route('roles.clone', $role->id) }}" method="post" class="d-inline">
+                                    @csrf
+                                    <button class="btn btn-outline-primary btn-sm" title="Clone Role"><i class="fas fa-clone"></i></button>
+                                </form>
                             </td>
                         </tr>
                     @endforeach

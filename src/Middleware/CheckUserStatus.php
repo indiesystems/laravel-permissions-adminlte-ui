@@ -17,6 +17,11 @@ class CheckUserStatus
 
         $user = $request->user();
 
+        // Skip check during impersonation — admin intentionally chose this user
+        if ($request->session()->has('impersonate_original_id')) {
+            return $next($request);
+        }
+
         if ($user && isset($user->status) && $user->status !== 'active') {
             Auth::logout();
             $request->session()->invalidate();

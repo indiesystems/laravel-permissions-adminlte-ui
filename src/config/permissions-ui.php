@@ -17,9 +17,6 @@ return [
     ],
 
     'impersonation' => [
-        // Permission required to impersonate users.
-        'permission' => 'users.impersonate',
-
         // Where to redirect after starting/stopping impersonation.
         'redirect' => '/',
     ],

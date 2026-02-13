@@ -33,13 +33,16 @@ class PermissionsUiProvider extends ServiceProvider
         // Register middleware aliases
         $router->aliasMiddleware('check-user-status', \IndieSystems\PermissionsAdminlteUi\Middleware\CheckUserStatus::class);
 
-        if ($this->app->runningInConsole()) {
-            $this->commands([
-                CreateRoutePermissionsCommand::class,
-                AssignAdminCommand::class,
-                CreateAdminRoleCommand::class,
-            ]);
+        // Inject impersonation banner on all web responses
+        if (config('permissions-ui.features.impersonation', true)) {
+            $router->pushMiddlewareToGroup('web', \IndieSystems\PermissionsAdminlteUi\Middleware\ImpersonationBanner::class);
         }
+
+        $this->commands([
+            CreateRoutePermissionsCommand::class,
+            AssignAdminCommand::class,
+            CreateAdminRoleCommand::class,
+        ]);
     }
 
     public function register()
@@ -56,8 +59,14 @@ class PermissionsUiProvider extends ServiceProvider
 
     protected function routeConfiguration()
     {
+        $middleware = ['web', 'auth'];
+
+        if (config('permissions-ui.routes.verification', true)) {
+            $middleware[] = 'verified';
+        }
+
         return [
-            'middleware' => ['web', 'auth'],
+            'middleware' => $middleware,
         ];
     }
 }

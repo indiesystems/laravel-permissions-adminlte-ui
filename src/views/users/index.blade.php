@@ -143,7 +143,7 @@
                             <th>Status</th>
                             @endif
                             <th>Roles</th>
-                            <th width="220px">Actions</th>
+                            <th width="280px">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -171,14 +171,21 @@
                                 @endforeach
                             </td>
                             <td>
-                                <div class="btn-group btn-group-sm">
+                                <div class="btn-group btn-group-sm mr-1">
                                     <a class="btn btn-info" href="{{ route('users.show', $user->id) }}" title="View">
                                         <i class="fas fa-eye"></i>
                                     </a>
                                     <a class="btn btn-secondary" href="{{ route('users.edit', $user->id) }}" title="Edit">
                                         <i class="fas fa-edit"></i>
                                     </a>
-                                    @if(config('permissions-ui.features.impersonation') && auth()->id() !== $user->id)
+                                    <form action="{{ route('users.destroy', $user->id) }}" method="post" class="d-inline" onsubmit="return confirm('Delete this user?')">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button class="btn btn-danger" title="Delete"><i class="fas fa-trash"></i></button>
+                                    </form>
+                                </div>
+                                <div class="btn-group btn-group-sm">
+                                    @if(config('permissions-ui.features.impersonation') && auth()->id() !== $user->id && !session('impersonate_original_id'))
                                     <form action="{{ route('users.impersonate.start', $user->id) }}" method="post" class="d-inline">
                                         @csrf
                                         <button class="btn btn-outline-dark" title="Impersonate"><i class="fas fa-user-secret"></i></button>
@@ -186,16 +193,11 @@
                                     @endif
                                     <form action="{{ route('users.manual-resend-verification', $user->id) }}" method="post" class="d-inline">
                                         @csrf
-                                        <button class="btn btn-primary" title="Resend Verification"><i class="fas fa-paper-plane"></i></button>
+                                        <button class="btn btn-outline-primary" title="Resend Verification"><i class="fas fa-paper-plane"></i></button>
                                     </form>
                                     <form action="{{ route('users.manual-reset-password', $user->id) }}" method="post" class="d-inline">
                                         @csrf
-                                        <button class="btn btn-warning" title="Reset Password"><i class="fas fa-key"></i></button>
-                                    </form>
-                                    <form action="{{ route('users.destroy', $user->id) }}" method="post" class="d-inline" onsubmit="return confirm('Delete this user?')">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button class="btn btn-danger" title="Delete"><i class="fas fa-trash"></i></button>
+                                        <button class="btn btn-outline-warning" title="Reset Password"><i class="fas fa-key"></i></button>
                                     </form>
                                 </div>
                             </td>
@@ -234,17 +236,6 @@
     </div>
 </section>
 
-{{-- Impersonation banner --}}
-@if(session('impersonate_original_id'))
-<div style="position:fixed;bottom:0;left:0;right:0;z-index:9999;background:#dc3545;color:#fff;padding:8px 20px;text-align:center;">
-    <i class="fas fa-user-secret mr-2"></i>
-    You are impersonating <strong>{{ auth()->user()->name }}</strong>.
-    <form action="{{ route('users.impersonate.stop') }}" method="post" class="d-inline ml-3">
-        @csrf
-        <button class="btn btn-light btn-sm"><i class="fas fa-sign-out-alt mr-1"></i>Stop Impersonating</button>
-    </form>
-</div>
-@endif
 @endsection
 
 @section('scripts')

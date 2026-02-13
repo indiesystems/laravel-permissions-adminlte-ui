@@ -30,16 +30,18 @@ if ($config['roles'] ?? false) {
 
 if ($config['permissions'] ?? false) {
     Route::post('permissions/bulk-action', [PermissionsController::class, 'bulkAction'])->name('permissions.bulk-action');
+    Route::post('permissions/sync', [PermissionsController::class, 'sync'])->name('permissions.sync');
     Route::resource('permissions', PermissionsController::class);
 }
 
 // Impersonation routes
 if (config('permissions-ui.features.impersonation', true)) {
+    // Permission handled by global PermissionMiddleware via route name (users.impersonate.start)
     Route::post('impersonate/{user}/start', [ImpersonationController::class, 'start'])
-        ->name('users.impersonate.start')
-        ->middleware('permission:' . config('permissions-ui.impersonation.permission', 'users.impersonate'));
+        ->name('users.impersonate.start');
 
-    // Stop route has no permission check - impersonated user may not have admin perms
+    // Stop must bypass PermissionMiddleware - impersonated user won't have admin perms
     Route::post('impersonate/stop', [ImpersonationController::class, 'stop'])
-        ->name('users.impersonate.stop');
+        ->name('users.impersonate.stop')
+        ->withoutMiddleware(\IndieSystems\PermissionsAdminlteUi\Middleware\PermissionMiddleware::class);
 }

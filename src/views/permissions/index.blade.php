@@ -8,9 +8,17 @@
                 <h1 class="m-0">Permissions</h1>
             </div>
             <div class="col-sm-6">
-                <a class="btn btn-primary btn-sm float-right" href="{{ route('permissions.create') }}">
-                    <i class="fas fa-plus mr-1"></i>Add Permission
-                </a>
+                <div class="float-right">
+                    <form action="{{ route('permissions.sync') }}" method="post" class="d-inline">
+                        @csrf
+                        <button class="btn btn-success btn-sm" title="Scan routes and create missing permissions">
+                            <i class="fas fa-sync-alt mr-1"></i>Sync from Routes
+                        </button>
+                    </form>
+                    <a class="btn btn-primary btn-sm" href="{{ route('permissions.create') }}">
+                        <i class="fas fa-plus mr-1"></i>Add Permission
+                    </a>
+                </div>
             </div>
         </div>
     </div>

@@ -3,6 +3,7 @@
 namespace IndieSystems\PermissionsAdminlteUi\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 use Spatie\Permission\Models\Permission;
 
@@ -11,7 +12,7 @@ class PermissionsController extends Controller
     public function __construct()
     {
         $this->middleware('permission:permissions.index|permissions.store|permissions.show|permissions.create|permissions.edit|permissions.delete', ['only' => ['index', 'show']]);
-        $this->middleware('permission:permissions.create', ['only' => ['create', 'store']]);
+        $this->middleware('permission:permissions.create', ['only' => ['create', 'store', 'sync']]);
         $this->middleware('permission:permissions.edit', ['only' => ['edit', 'update']]);
         $this->middleware('permission:permissions.delete', ['only' => ['destroy', 'bulkAction']]);
     }
@@ -102,6 +103,27 @@ class PermissionsController extends Controller
 
         return redirect()->route('permissions.index')
             ->withSuccess(__('Permission deleted successfully.'));
+    }
+
+    /**
+     * Sync permissions from routes.
+     */
+    public function sync()
+    {
+        $before = Permission::count();
+
+        Artisan::call('permission:create-route-permissions');
+
+        $after = Permission::count();
+        $created = $after - $before;
+
+        if ($created > 0) {
+            return redirect()->route('permissions.index')
+                ->withSuccess(__(':count new permission(s) created from routes.', ['count' => $created]));
+        }
+
+        return redirect()->route('permissions.index')
+            ->withSuccess(__('Permissions are up to date. No new routes found.'));
     }
 
     /**
