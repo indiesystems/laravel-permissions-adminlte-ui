@@ -14,3 +14,21 @@
         </div>
     @endif
 @endif
+
+@if(Session::get('error', false))
+    <div class="alert alert-danger" role="alert">
+        <i class="fa fa-exclamation-triangle"></i>
+        {{ Session::get('error') }}
+    </div>
+@endif
+
+@if($errors->any())
+    <div class="alert alert-danger" role="alert">
+        <i class="fa fa-exclamation-triangle"></i>
+        <ul class="mb-0 mt-1">
+            @foreach($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+@endif

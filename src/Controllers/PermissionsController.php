@@ -13,7 +13,7 @@ class PermissionsController extends Controller
         $this->middleware('permission:permissions.index|permissions.store|permissions.show|permissions.create|permissions.edit|permissions.delete', ['only' => ['index', 'show']]);
         $this->middleware('permission:permissions.create', ['only' => ['create', 'store']]);
         $this->middleware('permission:permissions.edit', ['only' => ['edit', 'update']]);
-        $this->middleware('permission:permissions.delete', ['only' => ['destroy']]);
+        $this->middleware('permission:permissions.delete', ['only' => ['destroy', 'bulkAction']]);
     }
 
     /**
@@ -22,7 +22,7 @@ class PermissionsController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function index()
-    {   
+    {
         $permissions = Permission::all();
 
         return view('permissionsUi::permissions.index', [
@@ -32,11 +32,11 @@ class PermissionsController extends Controller
 
     /**
      * Show form for creating permissions
-     * 
+     *
      * @return \Illuminate\Http\Response
      */
-    public function create() 
-    {   
+    public function create()
+    {
         return view('permissionsUi::permissions.create');
     }
 
@@ -47,7 +47,7 @@ class PermissionsController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function store(Request $request)
-    {   
+    {
         $request->validate([
             'name' => 'required|unique:permissions,name'
         ]);
@@ -102,5 +102,26 @@ class PermissionsController extends Controller
 
         return redirect()->route('permissions.index')
             ->withSuccess(__('Permission deleted successfully.'));
+    }
+
+    /**
+     * Bulk actions on permissions.
+     */
+    public function bulkAction(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'integer',
+            'action' => 'required|in:delete',
+        ]);
+
+        $ids = $request->get('ids');
+
+        if ($request->get('action') === 'delete') {
+            Permission::whereIn('id', $ids)->delete();
+            return back()->withSuccess(__(':count permission(s) deleted.', ['count' => count($ids)]));
+        }
+
+        return back();
     }
 }

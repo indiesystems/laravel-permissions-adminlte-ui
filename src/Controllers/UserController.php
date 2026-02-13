@@ -21,7 +21,7 @@ class UserController extends Controller
         $this->middleware('permission:users.list|users.create|users.edit|users.delete', ['only' => ['index', 'show']]);
         $this->middleware('permission:users.create', ['only' => ['create', 'store']]);
         $this->middleware('permission:users.edit', ['only' => ['edit', 'update']]);
-        $this->middleware('permission:users.delete', ['only' => ['destroy']]);
+        $this->middleware('permission:users.delete', ['only' => ['destroy', 'bulkAction']]);
     }
 
     /**
@@ -29,10 +29,43 @@ class UserController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        $users = User::with('roles')->paginate();
-        return view('permissionsUi::users.index', compact('users'));
+        $query = User::with('roles');
+
+        // Server-side search
+        if ($search = $request->get('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        // Filter by role
+        if ($role = $request->get('role')) {
+            $query->whereHas('roles', function ($q) use ($role) {
+                $q->where('name', $role);
+            });
+        }
+
+        // Filter by verified status
+        if ($request->has('verified') && $request->get('verified') !== '') {
+            if ($request->get('verified') === '1') {
+                $query->whereNotNull('email_verified_at');
+            } else {
+                $query->whereNull('email_verified_at');
+            }
+        }
+
+        // Filter by status (if feature enabled)
+        if (config('permissions-ui.features.user_status') && ($status = $request->get('status'))) {
+            $query->where('status', $status);
+        }
+
+        $users = $query->latest()->paginate()->appends($request->query());
+        $roles = Role::orderBy('name')->get();
+
+        return view('permissionsUi::users.index', compact('users', 'roles'));
     }
 
     /**
@@ -87,8 +120,16 @@ class UserController extends Controller
      */
     public function show(User $user)
     {
+        $user->load('roles.permissions');
+
+        // Get all permissions: direct + via roles
+        $rolePermissions = $user->getPermissionsViaRoles()->pluck('name')->unique()->sort()->values();
+        $directPermissions = $user->getDirectPermissions()->pluck('name')->unique()->sort()->values();
+
         return view('permissionsUi::users.show', [
             'user' => $user,
+            'rolePermissions' => $rolePermissions,
+            'directPermissions' => $directPermissions,
         ]);
     }
 
@@ -101,7 +142,6 @@ class UserController extends Controller
      */
     public function edit(User $user)
     {
-        // dd($user->roles->pluck('name')->toArray());
         return view('permissionsUi::users.edit', [
             'user'     => $user,
             'userRole' => $user->roles->pluck('name')->toArray(),
@@ -119,8 +159,17 @@ class UserController extends Controller
      */
     public function update(User $user, UpdateUserRequest $request)
     {
-        $user->update($request->validated());
+        $data = $request->validated();
 
+        // Handle status update if feature enabled
+        if (config('permissions-ui.features.user_status') && $request->has('status')) {
+            $statuses = config('permissions-ui.user_statuses', ['active', 'suspended', 'banned']);
+            if (in_array($request->get('status'), $statuses)) {
+                $data['status'] = $request->get('status');
+            }
+        }
+
+        $user->update($data);
         $user->syncRoles(Role::find($request->get('role')));
 
         return redirect()->route('users.index')
@@ -140,6 +189,47 @@ class UserController extends Controller
 
         return redirect()->route('users.index')
             ->withSuccess(__('User deleted successfully.'));
+    }
+
+    /**
+     * Bulk actions on users.
+     */
+    public function bulkAction(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'integer',
+            'action' => 'required|in:delete,assign_role,verify',
+        ]);
+
+        $ids = $request->get('ids');
+        // Never include current user in bulk operations
+        $ids = array_diff($ids, [$request->user()->id]);
+
+        if (empty($ids)) {
+            return back()->withErrors(['bulk' => __('No valid users selected.')]);
+        }
+
+        switch ($request->get('action')) {
+            case 'delete':
+                User::whereIn('id', $ids)->delete();
+                return back()->withSuccess(__(':count user(s) deleted.', ['count' => count($ids)]));
+
+            case 'assign_role':
+                $request->validate(['bulk_role' => 'required|exists:roles,id']);
+                $role = Role::findById($request->get('bulk_role'));
+                $users = User::whereIn('id', $ids)->get();
+                foreach ($users as $user) {
+                    $user->syncRoles($role);
+                }
+                return back()->withSuccess(__(':count user(s) assigned to role :role.', ['count' => count($ids), 'role' => $role->name]));
+
+            case 'verify':
+                User::whereIn('id', $ids)->whereNull('email_verified_at')->update(['email_verified_at' => now()]);
+                return back()->withSuccess(__('Selected users verified.'));
+        }
+
+        return back();
     }
 
     public function resendVerification(User $user, Request $request)

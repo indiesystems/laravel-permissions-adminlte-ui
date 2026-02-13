@@ -2,6 +2,7 @@
 namespace IndieSystems\PermissionsAdminlteUi\Providers;
 
 use Illuminate\Routing\Router;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use IndieSystems\PermissionsAdminlteUi\Console\AssignAdminCommand;
@@ -20,11 +21,17 @@ class PermissionsUiProvider extends ServiceProvider
         require_once __DIR__ . '/../helpers.php';
         $this->loadViewsFrom(__DIR__ . '/../views/', 'permissionsUi');
         $this->registerRoutes();
-        // $this->loadMigrationsFrom();
-        // seeder?
+
         $this->publishes([
             __DIR__ . '/../config/permissions-ui.php' => config_path('permissions-ui.php'),
         ], 'config');
+
+        $this->publishes([
+            __DIR__ . '/../database/migrations/add_status_to_users_table.php' => database_path('migrations/' . date('Y_m_d_His') . '_add_status_to_users_table.php'),
+        ], 'permissions-ui-migrations');
+
+        // Register middleware aliases
+        $router->aliasMiddleware('check-user-status', \IndieSystems\PermissionsAdminlteUi\Middleware\CheckUserStatus::class);
 
         if ($this->app->runningInConsole()) {
             $this->commands([

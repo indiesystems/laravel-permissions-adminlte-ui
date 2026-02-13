@@ -3,6 +3,7 @@
 namespace IndieSystems\PermissionsAdminlteUi\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Spatie\Permission\Models\Permission;
@@ -13,9 +14,9 @@ class RolesController extends Controller
     public function __construct()
     {
         $this->middleware('permission:roles.list|roles.create|roles.edit|roles.delete', ['only' => ['index', 'show']]);
-        $this->middleware('permission:roles.create', ['only' => ['create', 'store']]);
+        $this->middleware('permission:roles.create', ['only' => ['create', 'store', 'clone']]);
         $this->middleware('permission:roles.edit', ['only' => ['edit', 'update']]);
-        $this->middleware('permission:roles.delete', ['only' => ['destroy']]);
+        $this->middleware('permission:roles.delete', ['only' => ['destroy', 'bulkAction']]);
     }
 
     /**
@@ -68,10 +69,13 @@ class RolesController extends Controller
      */
     public function show(Role $role)
     {
-        $role            = $role;
+        $role->load('permissions');
         $rolePermissions = $role->permissions;
 
-        return view('permissionsUi::roles.show', compact('role', 'rolePermissions'));
+        // Get users with this role
+        $users = User::role($role->name)->with('roles')->paginate(20, ['*'], 'users_page');
+
+        return view('permissionsUi::roles.show', compact('role', 'rolePermissions', 'users'));
     }
 
     /**
@@ -123,5 +127,48 @@ class RolesController extends Controller
 
         return redirect()->route('roles.index')
             ->with('success', 'Role deleted successfully');
+    }
+
+    /**
+     * Clone a role with all its permissions.
+     */
+    public function clone(Role $role)
+    {
+        $newName = $role->name . '-copy';
+        $counter = 1;
+        while (Role::where('name', $newName)->exists()) {
+            $newName = $role->name . '-copy-' . $counter++;
+        }
+
+        $newRole = Role::create([
+            'name' => $newName,
+            'guard_name' => $role->guard_name,
+        ]);
+
+        $newRole->syncPermissions($role->permissions);
+
+        return redirect()->route('roles.edit', $newRole->id)
+            ->with('success', __('Role cloned as ":name". Rename it and adjust permissions.', ['name' => $newName]));
+    }
+
+    /**
+     * Bulk actions on roles.
+     */
+    public function bulkAction(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'integer',
+            'action' => 'required|in:delete',
+        ]);
+
+        $ids = $request->get('ids');
+
+        if ($request->get('action') === 'delete') {
+            Role::whereIn('id', $ids)->delete();
+            return back()->withSuccess(__(':count role(s) deleted.', ['count' => count($ids)]));
+        }
+
+        return back();
     }
 }
