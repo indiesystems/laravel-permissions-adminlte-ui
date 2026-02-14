@@ -8,6 +8,7 @@ use Illuminate\Support\ServiceProvider;
 use IndieSystems\PermissionsAdminlteUi\Console\AssignAdminCommand;
 use IndieSystems\PermissionsAdminlteUi\Console\CreateAdminRoleCommand;
 use IndieSystems\PermissionsAdminlteUi\Console\CreateRoutePermissionsCommand;
+use IndieSystems\PermissionsAdminlteUi\Console\InstallCommand;
 
 class PermissionsUiProvider extends ServiceProvider
 {
@@ -42,6 +43,7 @@ class PermissionsUiProvider extends ServiceProvider
             CreateRoutePermissionsCommand::class,
             AssignAdminCommand::class,
             CreateAdminRoleCommand::class,
+            InstallCommand::class,
         ]);
     }
 
