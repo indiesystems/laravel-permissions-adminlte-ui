@@ -178,7 +178,7 @@
                                     <a class="btn btn-secondary" href="{{ route('users.edit', $user->id) }}" title="Edit">
                                         <i class="fas fa-edit"></i>
                                     </a>
-                                    <form action="{{ route('users.destroy', $user->id) }}" method="post" class="d-inline" onsubmit="return confirm('Delete this user?')">
+                                    <form action="{{ route('users.destroy', $user->id) }}" method="post" class="btn-group d-inline" onsubmit="return confirm('Delete this user?')">
                                         @csrf
                                         @method('DELETE')
                                         <button class="btn btn-danger" title="Delete"><i class="fas fa-trash"></i></button>

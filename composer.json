@@ -3,7 +3,11 @@
     "description": "A Laravel adminLTE bootstrap 4 UI package for spatie permissions",
     "type": "library",
     "license": "MIT",
-    "homepage": "https",
+    "homepage": "https://github.com/indiesystems/laravel-permissions-adminlte-ui",
+    "support": {
+        "issues": "https://github.com/indiesystems/laravel-permissions-adminlte-ui/issues",
+        "source": "https://github.com/indiesystems/laravel-permissions-adminlte-ui"
+    },
     "authors": [
         {
             "name": "Chris Dimas",

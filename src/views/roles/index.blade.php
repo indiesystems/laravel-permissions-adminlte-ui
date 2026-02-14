@@ -81,7 +81,7 @@
                                     <a class="btn btn-secondary" href="{{ route('roles.edit', $role->id) }}" title="Edit">
                                         <i class="fas fa-edit"></i>
                                     </a>
-                                    <form class="d-inline" action="{{ route('roles.destroy', $role->id) }}" method="post" onsubmit="return confirm('Delete this role?')">
+                                    <form class="btn-group d-inline" action="{{ route('roles.destroy', $role->id) }}" method="post" onsubmit="return confirm('Delete this role?')">
                                         @csrf
                                         @method('DELETE')
                                         <button class="btn btn-danger" title="Delete"><i class="fas fa-trash"></i></button>
